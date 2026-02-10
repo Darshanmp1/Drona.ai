@@ -1,0 +1,15 @@
+# Drona AI - Core Dependencies
+# Minimal requirements for RAG foundation
+
+# Main dependency for generating text embeddings
+# This is a lightweight library that provides pre-trained models
+sentence-transformers==2.2.2
+
+# Required for numerical operations and vector math
+# The vector store uses this for similarity calculations
+numpy==1.24.3
+
+# These come with sentence-transformers but listing for clarity:
+# - torch (PyTorch - the deep learning framework)
+# - transformers (Hugging Face transformers library)
+# - scikit-learn (for some ML utilities)
