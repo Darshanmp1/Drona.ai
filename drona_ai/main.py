@@ -6,10 +6,12 @@ Features:
 1. Extract knowledge from PDFs, images, YouTube videos, and web pages
 2. Store extracted content in vector database
 3. Ask questions and get relevant answers
+4. Voice assistant for hands-free interaction
 """
 
 from rag.retriever import Retriever
 from extractors.file_handler import FileHandler
+from voice.voice_chat import VoiceChat
 
 
 def demo_basic_rag():
@@ -315,6 +317,97 @@ def split_text_into_chunks(text: str, chunk_size: int = 1000, overlap: int = 100
     return chunks
 
 
+def voice_mode():
+    """
+    Voice mode - interact with Drona AI using voice commands.
+    Supports speech input and voice responses.
+    """
+    print("\n" + "=" * 60)
+    print("🎤 DRONA AI - Voice Assistant Mode")
+    print("=" * 60)
+    print("\nInitializing voice assistant...")
+    
+    # Create retriever with some sample knowledge
+    retriever = Retriever()
+    
+    # Load some sample knowledge for demo
+    print("\n📚 Loading sample knowledge base...")
+    sample_knowledge = [
+        "Python is a versatile programming language used for web development, data science, "
+        "automation, and artificial intelligence. It emphasizes code readability.",
+        
+        "Machine learning is a subset of artificial intelligence that enables systems to learn "
+        "from data without being explicitly programmed. Common types include supervised learning, "
+        "unsupervised learning, and reinforcement learning.",
+        
+        "Data structures organize and store data efficiently. Common ones include arrays, linked lists, "
+        "stacks, queues, trees, hash tables, and graphs. Each has different performance characteristics.",
+        
+        "Algorithm complexity describes how performance changes with input size. Big O notation is used. "
+        "O(1) is constant time, O(log n) is logarithmic, O(n) is linear, and O(n²) is quadratic.",
+        
+        "Interview preparation requires consistent practice of coding problems, understanding of data "
+        "structures and algorithms, system design knowledge, and behavioral question preparation.",
+        
+        "Artificial intelligence includes machine learning, natural language processing, computer vision, "
+        "and robotics. AI systems can learn patterns, make decisions, and automate tasks.",
+    ]
+    
+    retriever.add_knowledge(sample_knowledge)
+    print("✓ Knowledge base ready")
+    
+    # Initialize voice chat
+    voice_chat = VoiceChat(retriever, speech_rate=175)
+    
+    # Option to preload custom content
+    print("\n" + "=" * 60)
+    print("Would you like to add custom content first? (y/n): ", end='')
+    add_content = input().strip().lower()
+    
+    if add_content == 'y':
+        print("\nYou can add:")
+        print("  1. Text directly")
+        print("  2. From a file/URL (using extraction mode)")
+        content_choice = input("Choose (1/2): ").strip()
+        
+        if content_choice == '1':
+            print("\nEnter your text (press Enter twice when done):")
+            lines = []
+            while True:
+                line = input()
+                if not line and lines and not lines[-1]:
+                    break
+                lines.append(line)
+            
+            custom_text = ' '.join(lines).strip()
+            if custom_text:
+                retriever.add_knowledge([custom_text])
+                print("✓ Custom content added!")
+        
+        elif content_choice == '2':
+            file_handler = FileHandler()
+            print("\nEnter file path or URL: ", end='')
+            source = input().strip()
+            
+            if source:
+                result = file_handler.extract(source)
+                if result:
+                    text = result['text']
+                    if len(text) > 5000:
+                        chunks = split_text_into_chunks(text, chunk_size=1000)
+                        retriever.add_knowledge(chunks)
+                    else:
+                        retriever.add_knowledge([text])
+                    print("✓ Content extracted and added!")
+    
+    # Start voice conversation
+    print("\n" + "=" * 60)
+    print("Starting voice conversation...")
+    print("=" * 60)
+    
+    voice_chat.start_conversation()
+
+
 def main():
     """
     Main function - entry point for the application.
@@ -329,14 +422,17 @@ def main():
     print("1. Demo mode (see how RAG works)")
     print("2. Interactive mode (ask your own questions)")
     print("3. Extraction mode (extract from PDFs, images, YouTube, web)")
+    print("4. Voice mode (voice assistant - speak your questions)")
     print()
     
-    choice = input("Enter choice (1/2/3, default=1): ").strip()
+    choice = input("Enter choice (1/2/3/4, default=1): ").strip()
     
     if choice == '2':
         interactive_mode()
     elif choice == '3':
         extraction_mode()
+    elif choice == '4':
+        voice_mode()
     else:
         # Default to demo mode
         demo_basic_rag()
@@ -345,8 +441,9 @@ def main():
         print("\nWhat would you like to try next?")
         print("1. Interactive mode")
         print("2. Extraction mode")
-        print("3. Exit")
-        next_choice = input("Enter choice (1/2/3): ").strip()
+        print("3. Voice mode")
+        print("4. Exit")
+        next_choice = input("Enter choice (1/2/3/4): ").strip()
         
         if next_choice == '1':
             print()
@@ -354,6 +451,9 @@ def main():
         elif next_choice == '2':
             print()
             extraction_mode()
+        elif next_choice == '3':
+            print()
+            voice_mode()
 
 
 if __name__ == "__main__":

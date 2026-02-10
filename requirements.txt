@@ -43,3 +43,21 @@ requests==2.31.0
 # lxml - Fast HTML/XML parser (used by BeautifulSoup)
 lxml==4.9.3
 
+# === Voice Assistant Dependencies ===
+
+# Speech Recognition
+# SpeechRecognition - Convert speech to text
+# Supports multiple engines (Google, Sphinx, Wit.ai, etc.)
+SpeechRecognition==3.10.0
+
+# PyAudio - Required for microphone input with SpeechRecognition
+# Note: On Windows, may need to install via: pip install pipwin, then: pipwin install pyaudio
+# Or download wheel from: https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio
+PyAudio==0.2.13
+
+# Text-to-Speech
+# pyttsx3 - Offline text-to-speech conversion
+# Works without internet connection, uses native OS speech engines
+pyttsx3==2.90
+
+
