@@ -1,6 +1,7 @@
 # Drona AI - Core Dependencies
-# Minimal requirements for RAG foundation
+# Requirements for RAG foundation + Content Extraction
 
+# === RAG Core Dependencies ===
 # Main dependency for generating text embeddings
 # This is a lightweight library that provides pre-trained models
 sentence-transformers==2.2.2
@@ -13,3 +14,32 @@ numpy==1.24.3
 # - torch (PyTorch - the deep learning framework)
 # - transformers (Hugging Face transformers library)
 # - scikit-learn (for some ML utilities)
+
+# === Content Extraction Dependencies ===
+
+# PDF Extraction
+# PyPDF2 - Extract text from PDF documents
+PyPDF2==3.0.1
+
+# Image OCR (Optical Character Recognition)
+# pytesseract - Python wrapper for Tesseract OCR engine
+# Note: Tesseract must be installed separately on your system
+pytesseract==0.3.10
+
+# Pillow - Image processing library (required for pytesseract)
+Pillow==10.0.0
+
+# YouTube Transcript Extraction
+# youtube-transcript-api - Fetch video subtitles/transcripts
+youtube-transcript-api==0.6.1
+
+# Web Scraping
+# beautifulsoup4 - Parse HTML and extract clean text
+beautifulsoup4==4.12.2
+
+# requests - Make HTTP requests to fetch web pages
+requests==2.31.0
+
+# lxml - Fast HTML/XML parser (used by BeautifulSoup)
+lxml==4.9.3
+
