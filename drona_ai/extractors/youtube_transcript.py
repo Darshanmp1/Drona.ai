@@ -1,34 +1,18 @@
-"""
-YouTube Transcript Extractor
-Extracts subtitles/transcripts from YouTube videos
-"""
+# YouTube subtitle/transcript extraction
 
 import re
+import time
 from typing import Optional, List, Dict
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
 
 
 def extract_video_id(url: str) -> Optional[str]:
-    """
-    Extract video ID from various YouTube URL formats.
-    
-    Supports:
-    - https://www.youtube.com/watch?v=VIDEO_ID
-    - https://youtu.be/VIDEO_ID
-    - https://www.youtube.com/embed/VIDEO_ID
-    
-    Args:
-        url: YouTube video URL
-        
-    Returns:
-        Video ID string, or None if invalid URL
-    """
-    # Pattern to match different YouTube URL formats
     patterns = [
         r'(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})',
         r'(?:youtu\.be\/)([a-zA-Z0-9_-]{11})',
         r'(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})',
+        r'(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})',  # YouTube Shorts
     ]
     
     for pattern in patterns:
@@ -36,7 +20,6 @@ def extract_video_id(url: str) -> Optional[str]:
         if match:
             return match.group(1)
     
-    # If no pattern matched, check if input is already a video ID
     if re.match(r'^[a-zA-Z0-9_-]{11}$', url):
         return url
     
@@ -44,18 +27,7 @@ def extract_video_id(url: str) -> Optional[str]:
 
 
 def extract_youtube(url: str, languages: List[str] = ['en']) -> Optional[str]:
-    """
-    Extract transcript/subtitles from a YouTube video.
-    
-    Args:
-        url: YouTube video URL or video ID
-        languages: List of preferred language codes (default: ['en'])
-        
-    Returns:
-        Full transcript as a string, or None if extraction fails
-    """
     try:
-        # Extract video ID from URL
         video_id = extract_video_id(url)
         
         if not video_id:
@@ -65,11 +37,26 @@ def extract_youtube(url: str, languages: List[str] = ['en']) -> Optional[str]:
         print(f"Fetching transcript for video: {video_id}")
         
         # Fetch transcript using YouTube Transcript API
-        # This tries to get transcript in specified languages
-        transcript_list = YouTubeTranscriptApi.get_transcript(
-            video_id, 
-            languages=languages
-        )
+        # Try multiple approaches to handle rate limiting
+        try:
+            transcript_list = YouTubeTranscriptApi.get_transcript(
+                video_id, 
+                languages=languages
+            )
+        except Exception as e:
+            error_str = str(e)
+            # Check for rate limiting
+            if '429' in error_str or 'Too Many Requests' in error_str:
+                print("Waiting 3 seconds due to rate limit...")
+                time.sleep(3)
+                # Retry once
+                transcript_list = YouTubeTranscriptApi.get_transcript(
+                    video_id, 
+                    languages=languages
+                )
+            else:
+                # Not rate limiting, re-raise
+                raise
         
         # Extract just the text from each transcript entry
         # Each entry has format: {'text': '...', 'start': 0.0, 'duration': 2.5}
@@ -85,7 +72,7 @@ def extract_youtube(url: str, languages: List[str] = ['en']) -> Optional[str]:
             print("Warning: Transcript is empty")
             return None
         
-        print(f"✓ Successfully extracted transcript ({len(full_transcript)} characters)")
+        print(f"Successfully extracted transcript ({len(full_transcript)} characters)")
         return full_transcript
         
     except TranscriptsDisabled:
@@ -98,21 +85,16 @@ def extract_youtube(url: str, languages: List[str] = ['en']) -> Optional[str]:
         return None
         
     except Exception as e:
-        print(f"Error extracting YouTube transcript: {str(e)}")
+        error_msg = str(e)
+        if '429' in error_msg or 'Too Many Requests' in error_msg:
+            print("YouTube rate limit exceeded. Please wait a few minutes and try again.")
+            print("Tip: YouTube restricts transcript requests to prevent abuse.")
+        else:
+            print(f"Error extracting YouTube transcript: {error_msg[:200]}")
         return None
 
 
 def extract_youtube_with_timestamps(url: str, languages: List[str] = ['en']) -> Optional[List[Dict]]:
-    """
-    Extract transcript with timestamps preserved.
-    
-    Args:
-        url: YouTube video URL or video ID
-        languages: List of preferred language codes
-        
-    Returns:
-        List of transcript entries with text, start time, and duration
-    """
     try:
         video_id = extract_video_id(url)
         
@@ -129,20 +111,11 @@ def extract_youtube_with_timestamps(url: str, languages: List[str] = ['en']) -> 
         return transcript_list
         
     except Exception as e:
-        print(f"Error extracting timestamped transcript: {str(e)}")
+        print(f"Error extracting timestamped transcript: {str(e)[:200]}")
         return None
 
 
 def list_available_transcripts(url: str) -> Optional[List[str]]:
-    """
-    List all available transcript languages for a video.
-    
-    Args:
-        url: YouTube video URL or video ID
-        
-    Returns:
-        List of available language codes
-    """
     try:
         video_id = extract_video_id(url)
         
@@ -159,5 +132,5 @@ def list_available_transcripts(url: str) -> Optional[List[str]]:
         return available_languages
         
     except Exception as e:
-        print(f"Error listing transcripts: {str(e)}")
+        print(f"Error listing transcripts: {str(e)[:200]}")
         return None

@@ -10,36 +10,13 @@ from .user_profile import UserProfile
 
 
 class ContextManager:
-    """
-    Manages context retrieval by combining conversation history
-    and user profile data to provide personalized, context-aware responses.
-    """
-    
     def __init__(self, memory: Optional[ConversationMemory] = None, 
                  profile: Optional[UserProfile] = None):
-        """
-        Initialize context manager.
-        
-        Args:
-            memory: ConversationMemory instance (creates new if None)
-            profile: UserProfile instance (creates new if None)
-        """
         self.memory = memory or ConversationMemory()
         self.profile = profile or UserProfile()
     
     def get_context_for_query(self, query: str, include_history: bool = True,
                               include_profile: bool = True) -> Dict:
-        """
-        Get relevant context for a new query.
-        
-        Args:
-            query: Current user query
-            include_history: Whether to include conversation history
-            include_profile: Whether to include user profile data
-            
-        Returns:
-            Dictionary with context information
-        """
         context = {
             'query': query,
             'history': None,
@@ -64,12 +41,6 @@ class ContextManager:
         return context
     
     def _generate_personalization_hints(self) -> List[str]:
-        """
-        Generate hints for personalizing responses based on user profile.
-        
-        Returns:
-            List of personalization suggestions
-        """
         hints = []
         profile_data = self.profile.get_full_profile()
         
@@ -95,14 +66,6 @@ class ContextManager:
         return hints
     
     def add_interaction(self, query: str, response: str, detected_topics: Optional[List[str]] = None):
-        """
-        Record a new interaction and update user profile.
-        
-        Args:
-            query: User's query
-            response: AI's response
-            detected_topics: Topics detected in the conversation
-        """
         # Save to conversation memory
         metadata = {'topics': detected_topics} if detected_topics else {}
         self.memory.add_conversation(query, response, metadata)
@@ -116,25 +79,9 @@ class ContextManager:
                 self.profile.add_topic_covered(topic)
     
     def search_relevant_context(self, keyword: str, max_results: int = 5) -> List[Dict]:
-        """
-        Search past conversations for relevant context.
-        
-        Args:
-            keyword: Keyword to search for
-            max_results: Maximum results to return
-            
-        Returns:
-            List of relevant past conversations
-        """
         return self.memory.search_conversations(keyword, max_results)
     
     def get_user_preferences(self) -> Dict:
-        """
-        Get user's learning preferences for response customization.
-        
-        Returns:
-            Dictionary with user preferences
-        """
         profile_data = self.profile.get_full_profile()
         return {
             'difficulty_level': profile_data['learning_preferences']['difficulty_level'],
@@ -143,12 +90,6 @@ class ContextManager:
         }
     
     def get_preparation_context(self) -> Dict:
-        """
-        Get context specific to placement preparation.
-        
-        Returns:
-            Dictionary with placement preparation data
-        """
         profile_data = self.profile.get_full_profile()
         return {
             'target_role': profile_data['goals']['target_role'],
@@ -159,12 +100,6 @@ class ContextManager:
         }
     
     def format_context_summary(self) -> str:
-        """
-        Format a human-readable summary of current context.
-        
-        Returns:
-            Formatted string with context summary
-        """
         summary_parts = []
         
         # User info
@@ -189,7 +124,6 @@ class ContextManager:
         return '\n'.join(summary_parts)
     
     def clear_all_data(self):
-        """Clear all memory and reset profile (use with caution!)."""
         self.memory.clear_memory()
         self.profile.reset_profile()
         print("✓ All context data cleared")

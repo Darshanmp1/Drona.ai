@@ -1,7 +1,4 @@
-"""
-Voice Chat Module
-Handles full conversational loop integrating speech recognition, RAG, and text-to-speech
-"""
+# Voice interaction combining speech input/output
 
 from typing import Optional
 from .speech_to_text import SpeechToText
@@ -9,23 +6,10 @@ from .text_to_speech import TextToSpeech
 
 
 class VoiceChat:
-    """
-    Voice chat handler that integrates speech input/output with RAG retriever.
-    Creates a voice-based conversational loop.
-    """
+    # Voice-based interaction system
     
     def __init__(self, retriever, language: str = "en-US", speech_rate: int = 175):
-        """
-        Initialize voice chat system.
-        
-        Args:
-            retriever: RAG retriever instance for answering queries
-            language: Language code for speech recognition
-            speech_rate: Speed of speech output (words per minute)
-        """
         self.retriever = retriever
-        
-        # Initialize speech-to-text
         self.stt = SpeechToText(language=language)
         
         # Initialize text-to-speech
@@ -38,7 +22,6 @@ class VoiceChat:
             print("⚠️  Warning: Text-to-speech not available. Responses will be text-only.")
     
     def greet(self):
-        """Welcome message when starting voice chat."""
         greeting = "Hello! I am Drona, your voice assistant. How can I help you today?"
         print("\n" + "=" * 60)
         print("🎤 Voice Chat Mode Active")
@@ -50,16 +33,6 @@ class VoiceChat:
             print(f"\n🔊 Drona: {greeting}\n")
     
     def listen_and_respond(self, top_k: int = 3, timeout: int = 5) -> Optional[str]:
-        """
-        Listen for user speech, process through RAG, and speak response.
-        
-        Args:
-            top_k: Number of relevant documents to retrieve
-            timeout: Seconds to wait for speech input
-            
-        Returns:
-            The text response, or None if failed
-        """
         # Step 1: Listen for user speech
         user_query = self.stt.listen(timeout=timeout)
         
@@ -99,12 +72,6 @@ class VoiceChat:
             return None
     
     def start_conversation(self, max_turns: Optional[int] = None):
-        """
-        Start an interactive voice conversation loop.
-        
-        Args:
-            max_turns: Maximum number of conversation turns. None for unlimited
-        """
         # Greet the user
         self.greet()
         
@@ -156,16 +123,6 @@ class VoiceChat:
                 break
     
     def quick_query(self, question: str, speak_response: bool = True) -> str:
-        """
-        Ask a single question without voice input (useful for testing).
-        
-        Args:
-            question: Text question to ask
-            speak_response: Whether to speak the response aloud
-            
-        Returns:
-            Text response from RAG
-        """
         try:
             print(f"\n📝 Question: {question}")
             
@@ -186,29 +143,16 @@ class VoiceChat:
             return error_msg
     
     def set_speech_rate(self, rate: int):
-        """
-        Adjust speech speed.
-        
-        Args:
-            rate: Words per minute (100-300, default 175)
-        """
         if self.voice_enabled:
             self.tts.set_rate(rate)
             print(f"Speech rate set to {rate} words per minute")
     
     def set_volume(self, volume: float):
-        """
-        Adjust speech volume.
-        
-        Args:
-            volume: 0.0 to 1.0
-        """
         if self.voice_enabled:
             self.tts.set_volume(volume)
             print(f"Volume set to {volume}")
     
     def test_voice_output(self):
-        """Test text-to-speech with a sample message."""
         test_message = "This is a test of the voice output system. Can you hear me clearly?"
         
         if self.voice_enabled:

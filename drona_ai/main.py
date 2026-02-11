@@ -1,36 +1,33 @@
 """
-Drona AI - Main Entry Point
+Drona AI - Core Application Module
 
-This is a demonstration of a RAG (Retrieval-Augmented Generation) system with content extraction.
-Features:
-1. Extract knowledge from PDFs, images, YouTube videos, and web pages
-2. Store extracted content in vector database
-3. Ask questions and get relevant answers
-4. Voice assistant for hands-free interaction
-5. Context memory and personalization
-6. Placement preparation tools (mock interview, resume analysis, study plans)
+Main entry point for Drona AI functionality. This module demonstrates how the
+RAG (Retrieval-Augmented Generation) pipeline works with content extraction.
+
+The system can:
+- Extract and process knowledge from various sources (PDFs, images, YouTube, web)
+- Store content efficiently in Endee vector database
+- Retrieve relevant context for answering questions
+- Provide voice-based interaction for accessibility
+- Remember conversation context for personalized responses
+- Help with placement prep through mock interviews, resume feedback, and study plans
 """
 
-from rag.retriever import Retriever
-from extractors.file_handler import FileHandler
-from voice.voice_chat import VoiceChat
-from memory.context_manager import ContextManager
-from placement.mock_interview import MockInterview
-from placement.resume_analyzer import ResumeAnalyzer
-from placement.study_recommender import StudyRecommender
+from .rag.retriever import Retriever
+from .extractors.file_handler import FileHandler
+from .voice.voice_chat import VoiceChat
+from .memory.context_manager import ContextManager
+from .placement.mock_interview import MockInterview
+from .placement.resume_analyzer import ResumeAnalyzer
+from .placement.study_recommender import StudyRecommender
 
 
 def demo_basic_rag():
-    """
-    Demonstrate the basic RAG functionality with sample study content.
-    This shows how the system works end-to-end.
-    """
-    # Step 1: Create a retriever instance
-    # This sets up our embedder and vector store
+    # Initialize retriever (sets up embeddings and vector storage)
     retriever = Retriever()
     
-    # Step 2: Add some sample knowledge
-    # In a real application, this would come from documents, PDFs, study materials, etc.
+    # Load some sample content into the knowledge base
+    # Real usage would pull from uploaded docs, PDFs, or scraped web content
     print("📚 Adding sample study content to knowledge base...")
     print("-" * 60 + "\n")
     
@@ -103,10 +100,6 @@ def demo_basic_rag():
 
 
 def interactive_mode():
-    """
-    Interactive mode - let users ask their own questions.
-    This is a simple command-line interface for testing.
-    """
     retriever = Retriever()
     
     # Pre-load some knowledge
@@ -169,10 +162,6 @@ def interactive_mode():
 
 
 def extraction_mode():
-    """
-    Extraction mode - extract knowledge from files and URLs, then query them.
-    Supports: PDFs, Images (OCR), YouTube videos, Web pages
-    """
     print("\n" + "=" * 60)
     print("📂 DRONA AI - Content Extraction Mode")
     print("=" * 60)
@@ -283,17 +272,6 @@ def extraction_mode():
 
 
 def split_text_into_chunks(text: str, chunk_size: int = 1000, overlap: int = 100) -> list:
-    """
-    Split long text into smaller chunks for better retrieval.
-    
-    Args:
-        text: Text to split
-        chunk_size: Size of each chunk in characters
-        overlap: Number of characters to overlap between chunks
-        
-    Returns:
-        List of text chunks
-    """
     chunks = []
     start = 0
     text_length = len(text)
@@ -324,10 +302,6 @@ def split_text_into_chunks(text: str, chunk_size: int = 1000, overlap: int = 100
 
 
 def voice_mode():
-    """
-    Voice mode - interact with Drona AI using voice commands.
-    Supports speech input and voice responses.
-    """
     print("\n" + "=" * 60)
     print("🎤 DRONA AI - Voice Assistant Mode")
     print("=" * 60)
@@ -415,9 +389,6 @@ def voice_mode():
 
 
 def mock_interview_mode():
-    """
-    Mock Interview Mode - Practice technical interview questions.
-    """
     print("\n" + "=" * 60)
     print("🎯 DRONA AI - Mock Interview Mode")
     print("=" * 60)
@@ -516,9 +487,6 @@ def mock_interview_mode():
 
 
 def resume_analysis_mode():
-    """
-    Resume Analysis Mode - Analyze and get feedback on resume.
-    """
     print("\n" + "=" * 60)
     print("📄 DRONA AI - Resume Analyzer")
     print("=" * 60 + "\n")
@@ -605,9 +573,6 @@ def resume_analysis_mode():
 
 
 def study_plan_mode():
-    """
-    Study Plan Mode - Get personalized study recommendations.
-    """
     print("\n" + "=" * 60)
     print("📚 DRONA AI - Study Planner")
     print("=" * 60 + "\n")
@@ -684,10 +649,6 @@ def study_plan_mode():
 
 
 def main():
-    """
-    Main function - entry point for the application.
-    Choose between demo mode, interactive mode, or extraction mode.
-    """
     print("\n" + "=" * 60)
     print(" " * 15 + "🎓 DRONA AI 🎓")
     print(" " * 10 + "RAG-based Study Assistant")

@@ -31,7 +31,7 @@ Pillow==10.0.0
 
 # YouTube Transcript Extraction
 # youtube-transcript-api - Fetch video subtitles/transcripts
-youtube-transcript-api==0.6.1
+youtube-transcript-api==0.6.2
 
 # Web Scraping
 # beautifulsoup4 - Parse HTML and extract clean text
@@ -60,4 +60,21 @@ PyAudio==0.2.13
 # Works without internet connection, uses native OS speech engines
 pyttsx3==2.90
 
+# === Vector Database Integration ===
+
+# msgpack - Serialization format for Endee vector database
+# Used for efficient binary data exchange with Endee
+msgpack==1.0.7
+
+# === Web Interface ===
+
+# streamlit - Build interactive web apps
+# Provides the user interface for Drona AI
+streamlit==1.28.0
+
+# === Compatibility ===
+
+# tf-keras - Backwards-compatible Keras for Transformers library
+# Required for sentence-transformers with newer Keras 3
+tf-keras>=2.20.0
 

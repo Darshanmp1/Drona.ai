@@ -1,43 +1,47 @@
 """
 Retriever Module - The brain that ties everything together
 
-This module coordinates the embedder and vector store to provide
-intelligent retrieval. It handles the workflow of:
+This module coordinates the embedder, vector store, and LLM to provide
+intelligent retrieval and generation. It handles the workflow of:
 1. Converting user queries to embeddings
-2. Finding relevant stored information
-3. Returning contextual results
+2. Finding relevant stored information from Endee vector database
+3. Generating natural language responses using LLaMA 3.2
 """
 
-from rag.embedder import Embedder
-from rag.vector_store import VectorStore
+from .embedder import Embedder
+from .vector_store import VectorStore
+from ..llm.ollama_llm import OllamaLLM
 
 
 class Retriever:
-    """
-    The Retriever is your intelligent assistant that:
-    - Takes your question
-    - Understands what you're asking (via embeddings)
-    - Finds the most relevant information it knows
-    - Gives you back useful context
-    """
-    
-    def __init__(self):
-        """
-        Set up the retriever with an embedder and vector store.
-        These work together to provide semantic search.
-        """
+    def __init__(self, embedder=None, vector_store=None, use_llm=True):
         print("=" * 60)
-        print("Initializing Drona AI Retriever")
+        print("Initializing Drona AI Retriever (RAG with LLaMA 3.2)")
         print("=" * 60 + "\n")
         
         # The embedder converts text to vectors
-        self.embedder = Embedder()
+        self.embedder = embedder if embedder is not None else Embedder()
         
-        # The vector store keeps track of all our knowledge
-        self.vector_store = VectorStore()
+        # The vector store keeps track of all our knowledge (Endee + fallback)
+        self.vector_store = vector_store if vector_store is not None else VectorStore()
+        
+        # The LLM generates natural language responses
+        self.use_llm = use_llm
+        self.llm = None
+        if use_llm:
+            try:
+                self.llm = OllamaLLM(model="llama3.2")
+                if self.llm.is_available():
+                    print("✓ LLaMA 3.2 connected via Ollama")
+                else:
+                    print("⚠ Ollama not running - responses will be retrieval-only")
+                    print("  Tip: Start Ollama with 'ollama serve' for LLM generation\n")
+            except Exception as e:
+                print(f"⚠ Could not initialize LLM: {e}")
+                print("  Continuing with retrieval-only mode\n")
         
         print("=" * 60)
-        print("✓ Retriever ready!")
+        print("✓ Retriever ready! (Endee + LLaMA 3.2)")
         print("=" * 60 + "\n")
     
     def add_knowledge(self, texts, metadatas=None):
@@ -63,20 +67,12 @@ class Retriever:
         
         print(f"✓ Knowledge base updated! Total items: {self.vector_store.count()}\n")
     
+    def add_document(self, text, metadata=None):
+        texts = [text]
+        metadatas = [metadata] if metadata is not None else None
+        self.add_knowledge(texts, metadatas)
+    
     def retrieve(self, query, top_k=3):
-        """
-        Retrieve the most relevant information for a given query.
-        
-        This is the core RAG operation - given a question or search query,
-        we find the most relevant stored knowledge.
-        
-        Args:
-            query: The user's question or search text
-            top_k: How many relevant results to return (default: 3)
-            
-        Returns:
-            List of tuples: (relevant_text, similarity_score, metadata)
-        """
         print(f"🔍 Searching for: '{query}'")
         
         # Step 1: Convert the query into an embedding
@@ -95,48 +91,51 @@ class Retriever:
         
         return results
     
-    def generate_response(self, query, top_k=3):
-        """
-        Generate a response to a user query.
-        
-        This combines retrieval with response generation.
-        For now, we return a simple formatted response with context.
-        Later, this can be enhanced with an LLM.
-        
-        Args:
-            query: The user's question
-            top_k: How many context pieces to retrieve
-            
-        Returns:
-            A formatted string response
-        """
-        # Get relevant context from our knowledge base
+    def generate_response(self, query, top_k=3, use_llm=None):
+        # Get relevant context from our knowledge base (Endee DB)
         results = self.retrieve(query, top_k=top_k)
         
-        # If we found relevant information, format a nice response
-        if results:
-            response = "Based on what I know, here's the relevant information:\n\n"
+        # Determine if we should use LLM
+        should_use_llm = use_llm if use_llm is not None else self.use_llm
+        
+        # If we have results and LLM is available, generate natural response
+        if results and should_use_llm and self.llm and self.llm.is_available():
+            # Build context from retrieved documents
+            context_parts = []
+            for i, (text, score, metadata) in enumerate(results, 1):
+                context_parts.append(f"[Document {i} - Relevance: {score:.2f}]\n{text}")
+            
+            context = "\n\n".join(context_parts)
+            
+            # Generate response using LLaMA 3.2
+            print("🤖 Generating response with LLaMA 3.2...\n")
+            response = self.llm.generate(
+                prompt=query,
+                context=context,
+                max_tokens=500,
+                temperature=0.7
+            )
+            
+            return response
+            
+        # Fallback: Return formatted retrieval results if no LLM
+        elif results:
+            response = "Based on what I found (retrieval-only mode):\n\n"
             
             for i, (text, score, metadata) in enumerate(results, 1):
                 response += f"{i}. [Relevance: {score:.2f}]\n"
                 response += f"   {text}\n\n"
             
-            # This is where you'd integrate an LLM in the future
-            # For now, we just return the retrieved context
-            response += "💡 Note: In the full version, this context will be used to generate "
-            response += "a natural language answer using an AI model."
+            response += "\n💡 Tip: Start Ollama with LLaMA 3.2 for AI-generated responses!"
+            return response
             
         else:
-            response = "I don't have enough information to answer that yet. "
-            response += "Try adding some knowledge to my database first!"
-        
-        return response
+            return "I don't have enough information to answer that yet. " \
+                   "Try adding some knowledge to my database first!"
     
     def get_stats(self):
-        """Get statistics about the retriever's knowledge base."""
         return self.vector_store.get_stats()
     
     def clear_knowledge(self):
-        """Clear all stored knowledge - start fresh."""
         self.vector_store.clear()
         print("✓ All knowledge cleared. Ready for new information!\n")

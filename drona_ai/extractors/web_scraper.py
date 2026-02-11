@@ -11,15 +11,7 @@ from bs4 import BeautifulSoup
 
 
 def is_valid_url(url: str) -> bool:
-    """
-    Check if a string is a valid URL.
-    
-    Args:
-        url: URL string to validate
-        
-    Returns:
-        True if valid URL, False otherwise
-    """
+
     try:
         result = urlparse(url)
         return all([result.scheme, result.netloc])
@@ -28,17 +20,6 @@ def is_valid_url(url: str) -> bool:
 
 
 def extract_webpage(url: str, timeout: int = 10) -> Optional[str]:
-    """
-    Extract main text content from a webpage.
-    Removes scripts, styles, navigation, ads, and other non-content elements.
-    
-    Args:
-        url: Website URL to scrape
-        timeout: Request timeout in seconds (default: 10)
-        
-    Returns:
-        Extracted clean text, or None if extraction fails
-    """
     try:
         # Validate URL
         if not is_valid_url(url):
@@ -61,41 +42,33 @@ def extract_webpage(url: str, timeout: int = 10) -> Optional[str]:
         # Parse HTML content
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Remove unwanted elements (scripts, styles, navigation, etc.)
-        unwanted_tags = [
-            'script', 'style', 'nav', 'footer', 'header',
-            'aside', 'iframe', 'noscript', 'form'
-        ]
-        
-        for tag in unwanted_tags:
-            for element in soup.find_all(tag):
-                element.decompose()
-        
-        # Also remove elements with common ad/navigation class names
-        unwanted_classes = [
-            'advertisement', 'ad', 'ads', 'sidebar', 'menu',
-            'navigation', 'cookie', 'popup', 'modal'
-        ]
-        
-        for class_name in unwanted_classes:
-            for element in soup.find_all(class_=re.compile(class_name, re.I)):
-                element.decompose()
-        
-        # Try to find main content area
-        # Look for common content containers
+        # Try to find main content area FIRST (before removing elements)
+        # Look for common content containers (including Wikipedia-specific selectors)
         main_content = None
-        content_tags = ['article', 'main', ['div', {'class': re.compile('content|article|post|entry', re.I)}]]
         
-        for tag in content_tags:
-            if isinstance(tag, list):
-                main_content = soup.find(tag[0], tag[1])
-            else:
-                main_content = soup.find(tag)
+        # Try Wikipedia-specific content first
+        if 'wikipedia.org' in url:
+            main_content = soup.find('div', {'id': 'mw-content-text'}) or soup.find('div', {'id': 'bodyContent'})
+        
+        # If not Wikipedia or not found, try generic selectors
+        if not main_content:
+            content_tags = [
+                'article', 
+                'main',
+                ['div', {'id': re.compile('content|main|article', re.I)}],
+                ['div', {'class': re.compile('content|article|post|entry|main', re.I)}]
+            ]
             
-            if main_content:
-                break
+            for tag in content_tags:
+                if isinstance(tag, list):
+                    main_content = soup.find(tag[0], tag[1])
+                else:
+                    main_content = soup.find(tag)
+                
+                if main_content:
+                    break
         
-        # If no main content found, use the entire body
+        # If still no main content found, use the entire body
         if not main_content:
             main_content = soup.find('body')
         
@@ -103,24 +76,29 @@ def extract_webpage(url: str, timeout: int = 10) -> Optional[str]:
             print("Warning: Could not find content in webpage")
             return None
         
-        # Extract text from the content
+        # NOW remove unwanted elements FROM the main content area
+        unwanted_tags = [
+            'script', 'style', 'nav', 'footer', 'header',
+            'aside', 'iframe', 'noscript', 'form'
+        ]
+        
+        for tag in unwanted_tags:
+            for element in main_content.find_all(tag):
+                element.decompose()
+        
+        # Extract text from the cleaned content
         text = main_content.get_text(separator=' ', strip=True)
         
-        # Clean up the text
-        # Remove extra whitespace
+        # Clean up the text - remove extra whitespace
         text = ' '.join(text.split())
         
-        # Remove very short lines (likely navigation/footer remnants)
-        lines = text.split('.')
-        meaningful_lines = [line.strip() for line in lines if len(line.strip()) > 20]
-        cleaned_text = '. '.join(meaningful_lines)
-        
-        if not cleaned_text.strip():
-            print("Warning: No meaningful text extracted from webpage")
+        # Basic validation - ensure minimum content length
+        if len(text) < 100:
+            print("Warning: Extracted text is too short (less than 100 characters)")
             return None
         
-        print(f"✓ Successfully extracted {len(cleaned_text)} characters from webpage")
-        return cleaned_text
+        print(f"✓ Successfully extracted {len(text)} characters from webpage")
+        return text
         
     except requests.exceptions.Timeout:
         print(f"Error: Request timed out after {timeout} seconds")
@@ -134,21 +112,31 @@ def extract_webpage(url: str, timeout: int = 10) -> Optional[str]:
         print(f"Error: HTTP error occurred: {e}")
         return None
         
+    except requests.exceptions.Timeout:
+        print(f"Error: Request timed out after {timeout} seconds")
+        print("The website is taking too long to respond. Try again or check your internet connection.")
+        return None
+    
+    except requests.exceptions.ConnectionError:
+        print(f"Error: Cannot connect to {url}")
+        print("Check your internet connection or verify the URL is correct.")
+        return None
+    
+    except requests.exceptions.HTTPError as e:
+        print(f"Error: HTTP {e.response.status_code} - {e.response.reason}")
+        if e.response.status_code == 403:
+            print("Access forbidden - website may be blocking automated requests")
+        elif e.response.status_code == 404:
+            print("Page not found - check if the URL is correct")
+        return None
+    
     except Exception as e:
-        print(f"Error extracting webpage content: {str(e)}")
+        print(f"Error extracting webpage: {str(e)}")
+        print(f"URL: {url}")
         return None
 
 
 def extract_webpage_metadata(url: str) -> dict:
-    """
-    Extract metadata from webpage (title, description, etc.).
-    
-    Args:
-        url: Website URL
-        
-    Returns:
-        Dictionary containing metadata
-    """
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'

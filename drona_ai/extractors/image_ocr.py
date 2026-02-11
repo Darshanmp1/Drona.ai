@@ -1,7 +1,4 @@
-"""
-Image OCR Module
-Extracts text from images using Tesseract OCR via pytesseract
-"""
+# Image OCR text extraction
 
 import os
 from typing import Optional
@@ -10,22 +7,11 @@ import pytesseract
 
 
 def extract_image(image_path: str) -> Optional[str]:
-    """
-    Extract text from an image using OCR (Optical Character Recognition).
-    
-    Args:
-        image_path: Path to the image file
-        
-    Returns:
-        Extracted text as a string, or None if extraction fails
-    """
     try:
-        # Check if file exists
         if not os.path.exists(image_path):
             print(f"Error: Image file not found at {image_path}")
             return None
         
-        # Supported image formats
         supported_formats = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.gif']
         file_ext = os.path.splitext(image_path)[1].lower()
         
@@ -71,17 +57,6 @@ def extract_image(image_path: str) -> Optional[str]:
 
 
 def extract_image_with_config(image_path: str, lang='eng', config='') -> Optional[str]:
-    """
-    Extract text from image with custom Tesseract configuration.
-    
-    Args:
-        image_path: Path to the image file
-        lang: Language code for OCR (default: 'eng')
-        config: Custom Tesseract configuration string
-        
-    Returns:
-        Extracted text as a string, or None if extraction fails
-    """
     try:
         image = Image.open(image_path)
         

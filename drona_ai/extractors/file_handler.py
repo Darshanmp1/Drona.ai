@@ -1,7 +1,4 @@
-"""
-File Handler Module
-Unified handler that detects input type and routes to appropriate extractor
-"""
+# Unified file/URL handling
 
 import os
 from typing import Optional, Dict
@@ -14,28 +11,13 @@ from .web_scraper import extract_webpage, is_valid_url
 
 
 class FileHandler:
-    """
-    Unified handler for extracting content from various sources.
-    Automatically detects input type and calls the appropriate extractor.
-    """
+    # Detects input type and routes to the right extractor
     
     def __init__(self):
-        """Initialize the FileHandler."""
-        # Supported file extensions for each type
         self.pdf_extensions = ['.pdf']
         self.image_extensions = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.gif']
         
     def detect_input_type(self, input_source: str) -> str:
-        """
-        Detect what type of input source this is.
-        
-        Args:
-            input_source: File path or URL
-            
-        Returns:
-            Type string: 'pdf', 'image', 'youtube', 'webpage', or 'unknown'
-        """
-        # Check if it's a YouTube URL or video ID
         if 'youtube.com' in input_source or 'youtu.be' in input_source:
             return 'youtube'
         
@@ -55,20 +37,6 @@ class FileHandler:
         return 'unknown'
     
     def extract(self, input_source: str) -> Optional[Dict]:
-        """
-        Extract content from any supported source.
-        Automatically detects type and uses appropriate extractor.
-        
-        Args:
-            input_source: File path or URL
-            
-        Returns:
-            Dictionary containing:
-                - 'text': Extracted text content
-                - 'type': Source type (pdf, image, youtube, webpage)
-                - 'source': Original input source
-            Or None if extraction fails
-        """
         # Detect input type
         input_type = self.detect_input_type(input_source)
         
@@ -123,15 +91,6 @@ class FileHandler:
         return result
     
     def extract_batch(self, input_sources: list) -> list:
-        """
-        Extract content from multiple sources.
-        
-        Args:
-            input_sources: List of file paths or URLs
-            
-        Returns:
-            List of extraction results (successful extractions only)
-        """
         results = []
         
         print(f"\nProcessing {len(input_sources)} sources...")
@@ -154,12 +113,6 @@ class FileHandler:
         return results
     
     def get_supported_types(self) -> Dict:
-        """
-        Get information about supported input types.
-        
-        Returns:
-            Dictionary mapping type names to their descriptions
-        """
         return {
             'pdf': {
                 'description': 'PDF documents',
@@ -184,14 +137,5 @@ class FileHandler:
 
 # Convenience function for quick extraction
 def extract_content(input_source: str) -> Optional[Dict]:
-    """
-    Quick extraction function that creates handler and extracts in one call.
-    
-    Args:
-        input_source: File path or URL
-        
-    Returns:
-        Extraction result dictionary or None
-    """
     handler = FileHandler()
     return handler.extract(input_source)
